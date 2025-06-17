@@ -1,0 +1,87 @@
+{
+    "Comment": "Rental Marketplace ETL Orchestration with Best Practices",
+    "StartAt": "Run Raw Extraction Job",
+    "States": {
+      "Run Raw Extraction Job": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "raw"
+        },
+        "Next": "Run S3 to Redshift Raw Load",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.error",
+            "Next": "Fail - Raw Job Failed"
+          }
+        ]
+      },
+      "Run S3 to Redshift Raw Load": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "s3_to_redshift"
+        },
+        "Next": "Run Curated Job",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.error",
+            "Next": "Fail - S3 to Redshift Failed"
+          }
+        ]
+      },
+      "Run Curated Job": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "curated_job"
+        },
+        "Next": "Run Presentation Layer Job",
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.error",
+            "Next": "Fail - Curated Job Failed"
+          }
+        ]
+      },
+      "Run Presentation Layer Job": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "presentation_layer"
+        },
+        "End": true,
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.error",
+            "Next": "Fail - Presentation Job Failed"
+          }
+        ]
+      },
+      "Fail - Raw Job Failed": {
+        "Type": "Fail",
+        "Error": "RawJobFailed",
+        "Cause": "The raw Glue job failed."
+      },
+      "Fail - S3 to Redshift Failed": {
+        "Type": "Fail",
+        "Error": "S3ToRedshiftFailed",
+        "Cause": "The S3 to Redshift Glue job failed."
+      },
+      "Fail - Curated Job Failed": {
+        "Type": "Fail",
+        "Error": "CuratedJobFailed",
+        "Cause": "The curated Glue job failed."
+      },
+      "Fail - Presentation Job Failed": {
+        "Type": "Fail",
+        "Error": "PresentationJobFailed",
+        "Cause": "The presentation layer Glue job failed."
+      }
+    }
+  }
+  
