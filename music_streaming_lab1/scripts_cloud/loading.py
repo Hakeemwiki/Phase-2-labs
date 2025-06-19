@@ -24,7 +24,7 @@ def load_data(**kwargs):
     4. Copies the new transformed data from S3 into `stg_streaming`.
     5. Performs an upsert operation (DELETE then INSERT) to merge the new data from `stg_streaming`
        into `fact_raw_streams`, ensuring uniqueness for stream events.
-    6. **Crucially, calculates KPIs incrementally**: It identifies the `track_genre` and `listen_hour`
+    6. Crucially, calculates KPIs incrementally**: It identifies the `track_genre` and `listen_hour`
        combinations present in the newly loaded `stg_streaming` data. It then recalculates
        all KPIs for these specific combinations by querying the *entire* `fact_raw_streams` table,
        storing the results in `stg_affected_kpis`.
@@ -213,7 +213,6 @@ def load_data(**kwargs):
         logger.info("New stream data upserted into fact_raw_streams (historical data).")
 
         # --- Incremental Aggregation of KPIs ---
-        # This is the core of Option B.
         # 1. Recalculate KPIs from 'fact_raw_streams' for only the 'track_genre' and 'listen_hour'
         #    combinations that are present in the 'stg_streaming' (newly loaded) data.
         # 2. Store these re-calculated (and cumulative for affected dimensions) KPIs in 'stg_affected_kpis'.
